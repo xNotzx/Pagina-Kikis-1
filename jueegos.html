@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Frascos de Amor Mágicos</title>
+    <style>
+        :root {
+            --bg-color: #ffeef2;
+            --primary-color: #ff6b8b;
+            --primary-hover: #ff477e;
+            --text-dark: #4a3b40;
+            --glass-fill: rgba(255, 107, 139, 0.05);
+            --glass-border: #ff8fa9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            max-width: 700px;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            color: #7d686f;
+            line-height: 1.6;
+        }
+
+        .progreso {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #ff477e;
+            font-weight: bold;
+            background: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(255, 117, 151, 0.15);
+            display: inline-block;
+        }
+
+        .grid-frascos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 10px;
+        }
+
+        .frasco-item {
+            background: white;
+            border-radius: 16px;
+            padding: 15px 10px;
+            box-shadow: 0 4px 15px rgba(255, 117, 151, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+        }
+
+        .frasco-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 117, 151, 0.2);
+        }
+
+        /* Base del Frasco en CSS */
+        .frasco {
+            width: 65px;
+            height: 90px;
+            border: 4px solid var(--glass-border);
+            border-radius: 10px 10px 22px 22px;
+            position: relative;
+            background: var(--glass-fill);
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+
+        /* Tapa del frasco */
+        .frasco::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 10px;
+            background: #e096a8;
+            border: 3px solid var(--glass-border);
+            border-radius: 4px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+        }
+
+        /* Cuello del frasco */
+        .frasco::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 26px;
+            height: 5px;
+            border-left: 4px solid var(--glass-border);
+            border-right: 4px solid var(--glass-border);
+        }
+
+        .corazon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            transition: all 0.3s;
+        }
+
+        .numero {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #6e585f;
+            background: #fff0f3;
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 1px solid #ffe0e6;
+        }
+
+        /* Estilo cuando ya fue abierto en la lista */
+        .frasco-item.abierto .frasco {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: #c9b1b6;
+        }
+        .frasco-item.abierto .frasco::before {
+            background: #c9b1b6;
+            border-color: #bfa3a9;
+            transform: translateX(-50%) translateY(-5px) rotate(-10deg);
+        }
+        .frasco-item.abierto .corazon {
+            color: #c9b1b6;
+        }
+
+        /* FONDOS Y ANIMACIÓN EN MEDIO DE LA PANTALLA (MODAL) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 238, 242, 0.75);
+            backdrop-filter: blur(15px); /* Fondo borroso ultra elegante */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Contenedor central animado */
+        .escena-central {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 500px;
+            height: 550px;
+        }
+
+        /* El Frasco Grande que aparece al centro */
+        .frasco-animado {
+            width: 150px;
+            height: 200px;
+            border: 6px solid var(--primary-color);
+            border-radius: 20px 20px 50px 50px;
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 20px 40px rgba(255, 107, 139, 0.2);
+            position: relative;
+            transform: scale(0);
+            z-index: 5;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .frasco-animado::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 20px;
+            background: #ff8fa9;
+            border: 4px solid var(--primary-color);
+            border-radius: 6px;
+            z-index: 10;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+        }
+
+        .frasco-animado::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 8px;
+            border-left: 6px solid var(--primary-color);
+            border-right: 6px solid var(--primary-color);
+        }
+
+        .frasco-animado .corazon-grande {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3.5rem;
+            animation: latido 1.5s infinite;
+        }
+
+        @keyframes latido {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* Animación activa del frasco abriéndose */
+        .escena-central.animar .frasco-animado {
+            transform: scale(1);
+        }
+
+        /* La tapa sale volando hacia arriba */
+        .escena-central.animar .frasco-animado::before {
+            transform: translateX(-50%) translateY(-60px) rotate(-20deg);
+            opacity: 0.8;
+        }
+
+        /* La Carta o Nota de Amor que sale del frasco */
+        .nota-amor {
+            background: white;
+            padding: 35px 25px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            width: 85%;
+            text-align: center;
+            position: absolute;
+            bottom: 40px;
+            z-index: 4;
+            opacity: 0;
+            transform: translateY(50px) scale(0.9);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+            border-top: 6px solid var(--primary-color);
+        }
+
+        .nota-amor h3 {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .nota-amor p {
+            font-size: 1.35rem;
+            line-height: 1.6;
+            font-style: italic;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        /* Revelar la nota después de que se abre el frasco */
+        .escena-central.revelado .nota-amor {
+            opacity: 1;
+            transform: translateY(-90px) scale(1);
+            z-index: 6; /* Se pone por encima del frasco */
+        }
+
+        .btn-cerrar {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 117, 151, 0.3);
+            transition: background 0.2s;
+        }
+
+        .btn-cerrar:hover {
+            background: var(--primary-hover);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>100 Frascos de Amor ❤️</h1>
+        <p class="subtitle">Cada frasco guarda un motivo secreto. Haz clic sobre cualquiera de ellos para ver cómo se abre en pantalla y te revela su razón.</p>
+        <div class="progreso" id="contador">Frascos abiertos: 0 / 100</div>
+    </header>
+
+    <div class="grid-frascos" id="contenedorFrascos"></div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="escena-central" id="escenaCentral">
+            
+            <div class="frasco-animado">
+                <div class="corazon-grande">❤️</div>
+            </div>
+
+            <div class="nota-amor">
+                <div style="font-size: 2rem; margin-bottom: 10px;">💌</div>
+                <h3 id="notaTitulo">FRASCO NÚMERO #0</h3>
+                <p id="notaTexto">"Aquí va la hermosa razón..."</p>
+                <button class="btn-cerrar" onclick="cerrarFrasco()">Cerrar Frasco</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Tus 100 hermosas razones pre-cargadas
+        const razones = [
+            "Porque tienes el corazón más noble que he conocido jamás.",
+            "Por la forma tan bonita en la que me miras cuando me sonríes.",
+            "Porque haces que mis peores días se transformen en los mejores con solo un abrazo.",
+            "Por tu risa, que es mi melodía favorita en todo el universo.",
+            "Porque contigo puedo ser yo mismo sin miedo a ser juzgado.",
+            "Por cómo cuidas de mí y te preocupas por mi bienestar en cada detalle.",
+            "Porque tus abrazos me hacen sentir en un refugio seguro y lleno de paz.",
+            "Por la complicidad que tenemos, a veces nos entendemos con una sola mirada.",
+            "Porque me motivas a ser una mejor versión de mí cada día.",
+            "Por los hermosos recuerdos que hemos construido y los que nos faltan por crear.",
+            "Porque tu felicidad es también mi felicidad.",
+            "Por cómo iluminas cualquier habitación en la que entras.",
+            "Porque adoro la sensación de entrelazar mis manos con las tuyas.",
+            "Por tu infinita paciencia y la ternura con la que me tratas.",
+            "Porque respetas mis espacios pero siempre estás ahí cuando te necesito.",
+            "Por todos los planes a futuro que imagino junto a ti.",
+            "Porque me encanta escuchar tu voz, incluso cuando hablas de cosas cotidianas.",
+            "Por cómo arrugas la nariz o sonríes cuando algo te divierte de verdad.",
+            "Porque compartes tus sueños conmigo y me haces parte de ellos.",
+            "Por tu perseverancia y la fuerza con la que enfrentas cada reto.",
+            "Porque eres mi lugar favorito en el mundo entero.",
+            "Por las conversaciones nocturnas en las que el tiempo parece volar.",
+            "Porque curas mis heridas con tu cariño y comprensión.",
+            "Por tu increíble capacidad de hacerme sonreír con un solo mensaje de texto.",
+            "Porque me has enseñado lo que significa el amor verdadero y sin condiciones.",
+            "Por los besos en la frente que me transmiten tanta paz y protección.",
+            "Porque eres mi mejor amigo/a y el amor de mi vida al mismo tiempo.",
+            "Por la forma en que recuerdas los pequeños detalles que te cuento de pasada.",
+            "Contigo el silencio nunca es incómodo, siempre es pacífico.",
+            "Por la dulzura con la que hablas de las cosas que te apasionan.",
+            "Amo la forma en que me extrañas y cómo me lo haces saber.",
+            "Porque haces que los momentos más simples se vuelvan mágicos e inolvidables.",
+            "Por tu forma de ver la vida, llena de luz, esperanza y empatía.",
+            "Porque eres mi pensamiento más constante desde que amanece hasta que me duermo.",
+            "Por cómo te llevas con las personas que quiero.",
+            "Porque sabes exactamente qué decir cuando necesito un consejo.",
+            "Por los pequeños sacrificios y gestos de amor que haces por mí a diario.",
+            "Porque la vida es mucho más bonita y emocionante desde que estás en ella.",
+            "Por tu inteligencia y lo mucho que admiro aprender cosas nuevas de ti.",
+            "Porque contigo he aprendido a disfrutar de las cosas pequeñas.",
+            "Por esa chispa de locura y diversión que le pones a todo lo que hacemos.",
+            "Porque eres mi cable a tierra cuando todo alrededor parece ser un caos.",
+            "Por la manera en la que defiendes tus ideales con tanta pasión.",
+            "Porque me fascinas tanto por fuera como por el hermoso ser que llevas dentro.",
+            "Por tu generosidad desinteresada con todo el mundo.",
+            "Porque me haces sentir una persona sumamente especial y amada.",
+            "Por cómo juegas con mi cabello o me acaricias sin darte cuenta.",
+            "Porque me aceptas con mis virtudes, mis defectos y mis manías.",
+            "Por el aroma que dejas en mi ropa después de que nos abrazamos.",
+            "Porque cada despedida tuya me deja contando las horas para volver a verte.",
+            "Por los secretos que compartimos y que solo nos pertenecen a nosotros dos.",
+            "Porque logras calmar mi ansiedad con solo sostener mi mano.",
+            "Por los chistes locales y bromas internas que solo nosotros entendemos.",
+            "Porque confío en ti con todo mi corazón, a ciegas.",
+            "Por la emoción que siento cada vez que sé que voy a ir a verte.",
+            "Porque eres mi mayor inspiración y mi más grande orgullo.",
+            "Por tus infinitos detalles, notas o mensajes inesperados.",
+            "Porque tu sola presencia me hace sentir que todo estará bien.",
+            "Por la manera en la que me apoyas en mis proyectos personales y metas.",
+            "Porque eres una persona única, auténtica y no te pareces a nadie más.",
+            "Por la forma en la que te concentras cuando haces algo que te gusta.",
+            "Porque eres lo primero que quiero contarle cuando algo bueno me sucede.",
+            "Por cómo logras descifrar mi estado de ánimo con solo escuchar tu 'hola'.",
+            "Por me das fuerzas cuando siento que ya no puedo continuar.",
+            "Por la forma en que brillan tus ojos cuando estás feliz.",
+            "Me encanta recordar cómo fue el día en que nos conocimos.",
+            "Por tu sentido del humor, que encaja perfectamente con el mío.",
+            "Porque eres mi constante en un mundo lleno de tantos cambios.",
+            "Por la delicadeza y el profundo amor con el que me miras.",
+            "Porque contigo he vivido los momentos más felices de toda mi vida.",
+            "Por cómo proteges nuestro amor y luchas por lo nuestro día con día.",
+            "Porque me haces reír incluso cuando tengo ganas de llorar.",
+            "Por la madurez y la empatía con la que resolvemos nuestras diferencias.",
+            "Porque adoro la forma en que te preocupas por mí.",
+            "Por tu gran madurez y la claridad con la que tomas decisiones.",
+            "Porque conviertes cualquier lugar ordinario en un palacio de recuerdos.",
+            "Por los besos espontáneos que me das a mitad de una frase.",
+            "Porque tu amor me da una paz mental invaluable.",
+            "Por la música que me recomiendas y que ahora me recuerda tanto a ti.",
+            "Porque me permites conocer tu lado más vulnerable y tierno.",
+            "Por cómo se complementan nuestras personalidades de manera perfecta.",
+            "Porque eres mi cómplice ideal para cualquier locura o aventura.",
+            "Por el brillo tan especial que le aportas a mi rutina diaria.",
+            "Porque me encanta presumirte con todo el mundo.",
+            "Por la calidez de tu piel y lo perfecto que se siente acurrucarme a tu lado.",
+            "Porque eres una persona súper comprometida con lo que ama y hace.",
+            "Por los apodos cariñosos que tenemos y que me hacen sonreír.",
+            "Porque curas mi miedos con la seguridad de tu tierno amor.",
+            "Por cómo te esfuerzas por sacarme una sonrisa pase lo que pase.",
+            "Contigo el futuro no me asusta, me llena de ilusión.",
+            "Por el inmenso respeto que siempre demuestras hacia mí.",
+            "Porque me haces sentir en casa sin importar en dónde estemos.",
+            "Por las fotos juntos que guardo como mi tesoro más preciado.",
+            "Nunca dejas de sorprenderme con tu increíble personalidad.",
+            "Por los lindos despertares o noches enteras pensando en ti.",
+            "Porque supiste ganarte un espacio sagrado en mi alma.",
+            "Por tu lealtad incondicional y por hacerme sentir siempre tu prioridad.",
+            "Tienes el superpoder de hacerme feliz con solo existir.",
+            "Por todo lo que hemos superado juntos y que nos ha vuelto más fuertes.",
+            "Por el simple y maravilloso hecho de ser tú: la persona de mi vida."
+        ];
+
+        const contenedor = document.getElementById('contenedorFrascos');
+        const overlay = document.getElementById('modalOverlay');
+        const escena = document.getElementById('escenaCentral');
+        const notaTitulo = document.getElementById('notaTitulo');
+        const notaTexto = document.getElementById('notaTexto');
+        const contador = document.getElementById('contador');
+        
+        let frascosAbiertos = new Set();
+
+        // Generar los 100 frascos individuales en la cuadrícula
+        for (let i = 0; i < 100; i++) {
+            const item = document.createElement('div');
+            item.className = 'frasco-item';
+            item.id = `frasco-lista-${i}`;
+            item.onclick = () => animarYAbrirFrasco(i);
+
+            item.innerHTML = `
+                <div class="frasco">
+                    <div class="corazon">❤️</div>
+                </div>
+                <div class="numero">#${i + 1}</div>
+            `;
+            contenedor.appendChild(item);
+        }
+
+        function animarYAbrirFrasco(id) {
+            // Configurar los textos que saldrán en la nota
+            notaTitulo.innerText = `FRASCO NÚMERO #${id + 1}`;
+            notaTexto.innerText = `"${razones[id]}"`;
+            
+            // Mostrar la capa flotante transparente
+            overlay.style.display = 'flex';
+            
+            // Paso 1: Hacer aparecer el frasco grande en el centro
+            setTimeout(() => {
+                escena.classList.add('animar');
+            }, 50);
+
+            // Paso 2: Unos milisegundos después de que la tapa "vuele", emerge la nota de amor
+            setTimeout(() => {
+                escena.classList.add('revelado');
+            }, 600);
+
+            // Marcar el frasco original de la cuadrícula como "ya abierto"
+            const elementoOriginal = document.getElementById(`frasco-lista-${id}`);
+            if (elementoOriginal) {
+                elementoOriginal.classList.add('abierto');
+            }
+            frascosAbiertos.add(id);
+            actualizarContador();
+        }
+
+        function cerrarFrasco() {
+            // Quitar las clases de animación al revés
+            escena.classList.remove('revelado');
+            escena.classList.remove('animar');
+            
+            // Ocultar por completo el overlay tras terminar la transición
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 400);
+        }
+
+        function actualizarContador() {
+            contador.innerText = `Frascos abiertos: ${frascosAbiertos.size} / 100`;
+        }
+
+        // También se puede cerrar haciendo clic fuera del cuadro blanco de la nota
+        overlay.onclick = function(e) {
+            if (e.target === overlay) {
+                cerrarFrasco();
+            }
+        }
+    </script>
+</body>
+</html>
